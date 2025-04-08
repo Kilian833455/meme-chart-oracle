@@ -1,5 +1,5 @@
 
-import { pipeline, RawImage } from '@huggingface/transformers';
+import { pipeline } from '@huggingface/transformers';
 import { AnalysisResult } from '@/components/ChartAnalyzer';
 
 // Define the chart patterns that our model will recognize
@@ -63,7 +63,7 @@ export class ChartAnalysisService {
       this.classifier = await pipeline(
         'image-classification',
         'Xenova/vit-base-patch16-224',
-        { quantized: true }
+        { /* Removing the quantized option as it's not supported in the type */ }
       );
       
       console.log('Chart analysis model loaded successfully');

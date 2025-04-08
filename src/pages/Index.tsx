@@ -1,11 +1,13 @@
+
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import CameraCapture from "@/components/CameraCapture";
-import ChartAnalyzer, { AnalysisResult } from "@/components/ChartAnalyzer";
+import ChartAnalyzer from "@/components/ChartAnalyzer";
 import HistoryList from "@/components/HistoryList";
 import AuthForm from "@/components/AuthForm";
 import CoinInfoForm, { CoinInfo } from "@/components/CoinInfoForm";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { AnalysisResult } from "@/types/AnalysisResult";
 
 const Index = () => {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
