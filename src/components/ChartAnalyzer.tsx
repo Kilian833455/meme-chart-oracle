@@ -6,6 +6,7 @@ import { ArrowUp, ArrowDown, ChartLine, BrainCircuit, Sparkles } from "lucide-re
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { motion } from "framer-motion";
+import { chartAnalysisService, chartPatterns } from "@/utils/chartAnalysisService";
 
 interface ChartAnalyzerProps {
   imageData: string | null;
@@ -21,19 +22,11 @@ export interface AnalysisResult {
   trend: "up" | "down" | "sideways";
 }
 
-const scenarioOptions = [
-  { name: "Moon imminent", trend: "up" as const, description: "Strong bullish pattern suggesting significant upward movement" },
-  { name: "Pump and dump incoming", trend: "down" as const, description: "Initial spike followed by steep decline" },
-  { name: "Dead coin walking", trend: "down" as const, description: "Downtrend that shows no signs of recovery" },
-  { name: "Consolidation before rally", trend: "up" as const, description: "Price stabilizing before upward movement" },
-  { name: "Whale accumulation", trend: "sideways" as const, description: "Large holders accumulating coins in a range" },
-  { name: "Double bottom reversal", trend: "up" as const, description: "Classic reversal pattern forming a bottom" },
-];
-
 const ChartAnalyzer: React.FC<ChartAnalyzerProps> = ({ imageData, onSaveResult }) => {
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [thinkingDots, setThinkingDots] = useState<string>("");
+  const [modelStatus, setModelStatus] = useState<string>("");
   const { toast } = useToast();
 
   // Animate the thinking dots
@@ -54,7 +47,23 @@ const ChartAnalyzer: React.FC<ChartAnalyzerProps> = ({ imageData, onSaveResult }
     };
   }, [isAnalyzing]);
 
-  const analyzeChart = () => {
+  // Initialize model on component mount
+  useEffect(() => {
+    const preloadModel = async () => {
+      try {
+        setModelStatus("Loading AI model...");
+        await chartAnalysisService.initModel();
+        setModelStatus("AI model ready");
+      } catch (error) {
+        console.error("Error preloading model:", error);
+        setModelStatus("AI model failed to load");
+      }
+    };
+    
+    preloadModel();
+  }, []);
+
+  const analyzeChart = async () => {
     if (!imageData) {
       toast({
         description: "Please capture or upload a chart image first",
@@ -64,25 +73,30 @@ const ChartAnalyzer: React.FC<ChartAnalyzerProps> = ({ imageData, onSaveResult }
 
     setIsAnalyzing(true);
     setAnalysisResult(null);
+    setModelStatus("Analyzing chart pattern...");
 
-    // Simulate analysis with timeout
-    setTimeout(() => {
-      // Select a random scenario for demo purposes
-      const randomScenario = scenarioOptions[Math.floor(Math.random() * scenarioOptions.length)];
-      const confidence = Math.floor(65 + Math.random() * 35); // Random confidence between 65-99%
+    try {
+      // Use the AI service to analyze the chart
+      const result = await chartAnalysisService.analyzeChartImage(imageData);
       
-      const result: AnalysisResult = {
-        id: `analysis-${Date.now()}`,
-        imageData,
-        scenario: randomScenario.name,
-        confidence,
-        timestamp: Date.now(),
-        trend: randomScenario.trend,
-      };
-
       setAnalysisResult(result);
+      setModelStatus("Analysis complete");
+      
+      toast({
+        title: "Analysis Complete",
+        description: `MEMEPUS found: ${result.scenario}`,
+      });
+    } catch (error) {
+      console.error("Error analyzing chart:", error);
+      
+      toast({
+        title: "Analysis Error",
+        description: "Failed to analyze chart. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsAnalyzing(false);
-    }, 2500);
+    }
   };
 
   const saveResult = () => {
@@ -111,7 +125,7 @@ const ChartAnalyzer: React.FC<ChartAnalyzerProps> = ({ imageData, onSaveResult }
   };
 
   const getScenarioDescription = (scenarioName: string) => {
-    const scenario = scenarioOptions.find(s => s.name === scenarioName);
+    const scenario = chartPatterns.find(s => s.name === scenarioName);
     return scenario?.description || "";
   };
 
@@ -147,7 +161,7 @@ const ChartAnalyzer: React.FC<ChartAnalyzerProps> = ({ imageData, onSaveResult }
                     MEMEPUS is thinking{thinkingDots}
                   </h3>
                   <p className="text-muted-foreground text-sm">
-                    Analyzing chart patterns using advanced machine learning...
+                    {modelStatus}
                   </p>
                 </div>
                 
