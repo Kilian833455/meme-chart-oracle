@@ -2,8 +2,10 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowUp, ArrowDown, ChartLine, Loader2 } from "lucide-react";
+import { ArrowUp, ArrowDown, ChartLine, BrainCircuit, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { motion } from "framer-motion";
 
 interface ChartAnalyzerProps {
   imageData: string | null;
@@ -20,18 +22,37 @@ export interface AnalysisResult {
 }
 
 const scenarioOptions = [
-  { name: "Moon imminent", trend: "up", description: "Strong bullish pattern suggesting significant upward movement" },
-  { name: "Pump and dump incoming", trend: "down", description: "Initial spike followed by steep decline" },
-  { name: "Dead coin walking", trend: "down", description: "Downtrend that shows no signs of recovery" },
-  { name: "Consolidation before rally", trend: "up", description: "Price stabilizing before upward movement" },
-  { name: "Whale accumulation", trend: "sideways", description: "Large holders accumulating coins in a range" },
-  { name: "Double bottom reversal", trend: "up", description: "Classic reversal pattern forming a bottom" },
+  { name: "Moon imminent", trend: "up" as const, description: "Strong bullish pattern suggesting significant upward movement" },
+  { name: "Pump and dump incoming", trend: "down" as const, description: "Initial spike followed by steep decline" },
+  { name: "Dead coin walking", trend: "down" as const, description: "Downtrend that shows no signs of recovery" },
+  { name: "Consolidation before rally", trend: "up" as const, description: "Price stabilizing before upward movement" },
+  { name: "Whale accumulation", trend: "sideways" as const, description: "Large holders accumulating coins in a range" },
+  { name: "Double bottom reversal", trend: "up" as const, description: "Classic reversal pattern forming a bottom" },
 ];
 
 const ChartAnalyzer: React.FC<ChartAnalyzerProps> = ({ imageData, onSaveResult }) => {
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [thinkingDots, setThinkingDots] = useState<string>("");
   const { toast } = useToast();
+
+  // Animate the thinking dots
+  useEffect(() => {
+    let dotsInterval: NodeJS.Timeout;
+    
+    if (isAnalyzing) {
+      dotsInterval = setInterval(() => {
+        setThinkingDots(prev => {
+          if (prev.length >= 3) return "";
+          return prev + ".";
+        });
+      }, 500);
+    }
+    
+    return () => {
+      if (dotsInterval) clearInterval(dotsInterval);
+    };
+  }, [isAnalyzing]);
 
   const analyzeChart = () => {
     if (!imageData) {
@@ -97,19 +118,66 @@ const ChartAnalyzer: React.FC<ChartAnalyzerProps> = ({ imageData, onSaveResult }
   return (
     <div className="mt-6">
       {!analysisResult ? (
-        <Button
-          onClick={analyzeChart}
-          disabled={!imageData || isAnalyzing}
-          className="w-full py-6 text-lg bg-oracle-400 hover:bg-oracle-500 transition-all"
-        >
-          {isAnalyzing ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing Chart...
-            </>
-          ) : (
-            "Analyze Chart"
-          )}
-        </Button>
+        isAnalyzing ? (
+          <Card className="border border-oracle-200 shadow-lg animate-pulse">
+            <CardContent className="pt-6 pb-6">
+              <div className="flex flex-col items-center justify-center text-center space-y-4">
+                <div className="relative w-24 h-24">
+                  <Avatar className="w-24 h-24">
+                    <AvatarImage src="/lovable-uploads/1d9a95a2-42a4-4884-8297-1968d1893ad6.png" alt="MEMEPUS" />
+                    <AvatarFallback className="bg-oracle-300 text-white text-3xl">M</AvatarFallback>
+                  </Avatar>
+                  <motion.div
+                    className="absolute top-0 right-0"
+                    animate={{
+                      scale: [1, 1.2, 1],
+                      rotate: [0, 10, -10, 0],
+                    }}
+                    transition={{
+                      duration: 1.5,
+                      repeat: Infinity,
+                    }}
+                  >
+                    <Sparkles className="h-8 w-8 text-yellow-400" />
+                  </motion.div>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-xl font-medium flex items-center justify-center gap-2">
+                    <BrainCircuit className="h-5 w-5 text-oracle-400" />
+                    MEMEPUS is thinking{thinkingDots}
+                  </h3>
+                  <p className="text-muted-foreground text-sm">
+                    Analyzing chart patterns using advanced machine learning...
+                  </p>
+                </div>
+                
+                <div className="w-full max-w-xs mx-auto">
+                  <div className="h-2 bg-oracle-100 rounded-full overflow-hidden">
+                    <motion.div 
+                      className="h-full bg-oracle-400"
+                      animate={{
+                        width: ["0%", "100%", "0%"]
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Button
+            onClick={analyzeChart}
+            disabled={!imageData}
+            className="w-full py-6 text-lg bg-oracle-400 hover:bg-oracle-500 transition-all"
+          >
+            Analyze Chart with MEMEPUS AI
+          </Button>
+        )
       ) : (
         <Card className="border border-oracle-200 shadow-lg animate-pulse-glow">
           <CardHeader className="bg-gradient-to-r from-oracle-300/20 to-oracle-400/10">
