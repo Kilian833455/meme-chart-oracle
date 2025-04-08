@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import CameraCapture from "@/components/CameraCapture";
@@ -14,10 +13,9 @@ const Index = () => {
   const [coinInfoHistory, setCoinInfoHistory] = useState<CoinInfo[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState<string | undefined>();
+  const [coinFormKey, setCoinFormKey] = useState<number>(0);
 
-  // Load data from localStorage on initial render
   useEffect(() => {
-    // Load analysis history
     const savedHistory = localStorage.getItem("analysisHistory");
     if (savedHistory) {
       try {
@@ -27,7 +25,6 @@ const Index = () => {
       }
     }
     
-    // Load coin info history
     const savedCoinInfo = localStorage.getItem("coinInfoHistory");
     if (savedCoinInfo) {
       try {
@@ -37,7 +34,6 @@ const Index = () => {
       }
     }
     
-    // Check if user is logged in
     const savedUser = localStorage.getItem("currentUser");
     if (savedUser) {
       try {
@@ -50,18 +46,17 @@ const Index = () => {
     }
   }, []);
 
-  // Save history to localStorage when it changes
   useEffect(() => {
     localStorage.setItem("analysisHistory", JSON.stringify(analysisHistory));
   }, [analysisHistory]);
   
-  // Save coin info to localStorage when it changes
   useEffect(() => {
     localStorage.setItem("coinInfoHistory", JSON.stringify(coinInfoHistory));
   }, [coinInfoHistory]);
 
   const handleImageCapture = (imageData: string | null) => {
     setCapturedImage(imageData);
+    setCoinFormKey(prevKey => prevKey + 1);
   };
 
   const handleSaveResult = (result: AnalysisResult) => {
@@ -112,7 +107,7 @@ const Index = () => {
               Add Coin Information
             </AccordionTrigger>
             <AccordionContent>
-              <CoinInfoForm onSubmit={handleAddCoinInfo} />
+              <CoinInfoForm key={coinFormKey} onSubmit={handleAddCoinInfo} />
             </AccordionContent>
           </AccordionItem>
         </Accordion>

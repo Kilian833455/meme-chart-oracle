@@ -182,7 +182,11 @@ const ChartAnalyzer: React.FC<ChartAnalyzerProps> = ({ imageData, onSaveResult }
         <Card className="border border-oracle-200 shadow-lg animate-pulse-glow">
           <CardHeader className="bg-gradient-to-r from-oracle-300/20 to-oracle-400/10">
             <CardTitle className="flex items-center gap-2">
-              {getTrendIcon(analysisResult.trend)} {analysisResult.scenario}
+              <Avatar className="w-6 h-6 mr-1">
+                <AvatarImage src="/lovable-uploads/1d9a95a2-42a4-4884-8297-1968d1893ad6.png" alt="MEMEPUS" />
+                <AvatarFallback className="bg-oracle-300 text-white text-xs">M</AvatarFallback>
+              </Avatar>
+              <span className="text-oracle-600">MEMEPUS thinks:</span> {getTrendIcon(analysisResult.trend)} {analysisResult.scenario}
             </CardTitle>
             <CardDescription>
               {getScenarioDescription(analysisResult.scenario)}
