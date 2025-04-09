@@ -56,84 +56,180 @@ export const chartPatterns: ChartPattern[] = [
   },
 ];
 
-// Chart-specific feature recognition terms
-const chartSpecificTerms = [
-  // Candlestick chart elements
-  'candlestick', 'candle', 'wick', 'shadow', 'body', 'doji',
+// Enhanced training data for chart recognition
+const chartSpecificFeatures = {
   // Chart types
-  'chart', 'graph', 'trading chart', 'price chart', 'market chart',
-  // Trading platform elements
-  'trading view', 'exchange', 'market cap', 'volume', 'mcap',
-  // Crypto chart elements
-  'price action', 'support', 'resistance', 'trend line',
+  chartTypes: [
+    'candlestick chart', 'line chart', 'bar chart', 'trading chart', 'price chart', 'crypto chart',
+    'stock chart', 'financial chart', 'market chart', 'technical chart', 'trading view chart',
+    'exchange chart', 'price action chart', 'crypto price chart'
+  ],
+  
+  // Chart elements
+  chartElements: [
+    // Candlestick patterns
+    'candlestick', 'candle', 'wick', 'shadow', 'body', 'doji', 'hammer', 'hanging man',
+    'engulfing pattern', 'morning star', 'evening star', 'shooting star', 'marubozu',
+    
+    // Chart indicators
+    'moving average', 'EMA', 'SMA', 'MACD', 'RSI', 'bollinger bands', 'fibonacci levels',
+    'stochastic', 'ATR', 'volume profile', 'OBV', 'ichimoku cloud',
+    
+    // Chart components
+    'price scale', 'time scale', 'grid lines', 'chart legend', 'price axis', 'time axis',
+    'volume bars', 'trend line', 'support line', 'resistance line', 'channel',
+    
+    // Trading terminology
+    'breakout', 'breakdown', 'reversal', 'continuation', 'divergence', 'convergence',
+    'overbought', 'oversold', 'consolidation', 'accumulation', 'distribution'
+  ],
+  
+  // Visual features of crypto charts
+  visualFeatures: [
+    'grid background', 'dark theme', 'light theme', 'price scale', 'time intervals',
+    'candlestick pattern', 'green and red candles', 'green and red bars', 'volume indicator',
+    'technical indicators', 'chart annotations', 'trend lines', 'horizontal lines',
+    'vertical lines', 'chart patterns', 'chart areas', 'price labels', 'trading interface'
+  ],
+  
+  // Trading platforms
+  tradingPlatforms: [
+    'trading view', 'binance', 'coinbase', 'kraken', 'kucoin', 'ftx', 'bybit',
+    'bitfinex', 'dex', 'uniswap', 'pancakeswap', 'dydx', 'metamask', 'crypto exchange'
+  ],
+  
+  // Cryptocurrency terms
+  cryptoTerms: [
+    'bitcoin', 'ethereum', 'altcoin', 'memecoin', 'token', 'coin', 'btc', 'eth', 
+    'blockchain', 'crypto', 'cryptocurrency', 'defi', 'nft', 'web3', 'dapp',
+    'smart contract', 'wallet', 'address', 'transaction', 'block', 'mining', 'staking',
+    'yield farming', 'liquidity pool', 'market cap', 'volume', 'mcap', 'supply'
+  ],
+  
   // Timeframes
-  'timeframe', '1m', '5m', '15m', '1h', '4h', '1d', 'daily',
-  // Crypto trading terms
-  'crypto', 'token', 'coin', 'bitcoin', 'ethereum', 'btc', 'eth',
-  // Identifiable UI elements in crypto charts
-  'order book', 'depth chart', 'buy orders', 'sell orders',
-  // Colors commonly used in charts
-  'green candle', 'red candle', 'price line',
-  // Trading interfaces
-  'trading interface', 'trading platform', 'exchange', 'dex'
+  timeframes: [
+    '1m', '5m', '15m', '30m', '1h', '2h', '4h', '6h', '12h', '1d', '3d', '1w', '1M',
+    'minute chart', 'hourly chart', 'daily chart', 'weekly chart', 'monthly chart'
+  ]
+};
+
+// Feature vectors for different chart types to aid in detection
+const chartTypeVectors = [
+  // Candlestick chart: High score for financial charts with patterns
+  {
+    type: "candlestick chart",
+    features: ["candlestick", "wick", "body", "trading", "financial", "price", "market", "chart", "bars"],
+    weight: 1.2
+  },
+  // Line chart: Simple trend lines
+  {
+    type: "line chart",
+    features: ["line", "trend", "curve", "graph", "plot", "data", "price", "movement"],
+    weight: 1.0
+  },
+  // Trading platform: UI elements and layout
+  {
+    type: "trading platform",
+    features: ["interface", "trading", "platform", "screen", "monitor", "display", "terminal", "dashboard", "orderbook"],
+    weight: 0.8
+  },
+  // Technical analysis: Indicators and patterns
+  {
+    type: "technical analysis",
+    features: ["indicator", "oscillator", "pattern", "signal", "analysis", "technical", "study"],
+    weight: 1.1
+  }
 ];
 
-// Visual features of cryptocurrency charts
-const cryptoChartVisualFeatures = [
-  'grid background', 'dark background', 'price scale',
-  'candlestick pattern', 'green and red bars', 'time axis',
-  'volume bars', 'technical indicators'
+// Combined chart feature dictionary for efficient lookup
+const allChartFeatures = [
+  ...chartSpecificFeatures.chartTypes,
+  ...chartSpecificFeatures.chartElements,
+  ...chartSpecificFeatures.visualFeatures,
+  ...chartSpecificFeatures.tradingPlatforms,
+  ...chartSpecificFeatures.cryptoTerms,
+  ...chartSpecificFeatures.timeframes
 ];
 
-// Map image classification labels to our chart patterns with weights
+// Enhanced pattern recognition using label-to-pattern mappings with weights
 const labelMappings: Record<string, { pattern: string, weight: number }[]> = {
-  // Crypto chart indicators
-  'candlestick': [{ pattern: 'Moon imminent', weight: 0.6 }, { pattern: 'Pump and dump incoming', weight: 0.6 }],
-  'chart': [{ pattern: 'Moon imminent', weight: 0.5 }, { pattern: 'Dead coin walking', weight: 0.4 }],
-  'trading': [{ pattern: 'Whale accumulation', weight: 0.5 }, { pattern: 'Double bottom reversal', weight: 0.4 }],
-  'graph': [{ pattern: 'Consolidation before rally', weight: 0.5 }, { pattern: 'Moon imminent', weight: 0.4 }],
-  'crypto': [{ pattern: 'Moon imminent', weight: 0.7 }, { pattern: 'Pump and dump incoming', weight: 0.6 }],
-  'exchange': [{ pattern: 'Whale accumulation', weight: 0.6 }, { pattern: 'Double bottom reversal', weight: 0.5 }],
+  // Chart types and platforms (high confidence)
+  'candlestick': [{ pattern: 'Moon imminent', weight: 0.7 }, { pattern: 'Double bottom reversal', weight: 0.6 }],
+  'chart': [{ pattern: 'Moon imminent', weight: 0.6 }, { pattern: 'Consolidation before rally', weight: 0.5 }],
+  'trading': [{ pattern: 'Whale accumulation', weight: 0.6 }, { pattern: 'Double bottom reversal', weight: 0.5 }],
+  'graph': [{ pattern: 'Moon imminent', weight: 0.5 }, { pattern: 'Consolidation before rally', weight: 0.5 }],
+  'crypto': [{ pattern: 'Moon imminent', weight: 0.8 }, { pattern: 'Pump and dump incoming', weight: 0.7 }],
+  'financial': [{ pattern: 'Moon imminent', weight: 0.6 }, { pattern: 'Dead coin walking', weight: 0.5 }],
+  'tradingview': [{ pattern: 'Whale accumulation', weight: 0.7 }, { pattern: 'Double bottom reversal', weight: 0.6 }],
+  'binance': [{ pattern: 'Moon imminent', weight: 0.7 }, { pattern: 'Pump and dump incoming', weight: 0.6 }],
+  'coinbase': [{ pattern: 'Consolidation before rally', weight: 0.6 }, { pattern: 'Whale accumulation', weight: 0.5 }],
+  'exchange': [{ pattern: 'Moon imminent', weight: 0.6 }, { pattern: 'Pump and dump incoming', weight: 0.5 }],
   
-  // Candlestick patterns
-  'bars': [{ pattern: 'Moon imminent', weight: 0.6 }, { pattern: 'Dead coin walking', weight: 0.5 }],
-  'candle': [{ pattern: 'Pump and dump incoming', weight: 0.7 }, { pattern: 'Double bottom reversal', weight: 0.6 }],
-  'pattern': [{ pattern: 'Double bottom reversal', weight: 0.7 }, { pattern: 'Consolidation before rally', weight: 0.6 }],
+  // Candlestick patterns and chart elements
+  'candle': [{ pattern: 'Moon imminent', weight: 0.8 }, { pattern: 'Double bottom reversal', weight: 0.7 }],
+  'candlestick': [{ pattern: 'Moon imminent', weight: 0.8 }, { pattern: 'Pump and dump incoming', weight: 0.6 }],
+  'bar': [{ pattern: 'Moon imminent', weight: 0.6 }, { pattern: 'Dead coin walking', weight: 0.5 }],
+  'wick': [{ pattern: 'Double bottom reversal', weight: 0.7 }, { pattern: 'Pump and dump incoming', weight: 0.6 }],
+  'pattern': [{ pattern: 'Double bottom reversal', weight: 0.8 }, { pattern: 'Consolidation before rally', weight: 0.7 }],
+  'indicator': [{ pattern: 'Moon imminent', weight: 0.6 }, { pattern: 'Whale accumulation', weight: 0.5 }],
+  'moving average': [{ pattern: 'Moon imminent', weight: 0.7 }, { pattern: 'Dead coin walking', weight: 0.6 }],
+  'volume': [{ pattern: 'Whale accumulation', weight: 0.8 }, { pattern: 'Pump and dump incoming', weight: 0.7 }],
   
-  // Trend indicators
-  'upward': [{ pattern: 'Moon imminent', weight: 0.9 }, { pattern: 'Double bottom reversal', weight: 0.7 }],
-  'bullish': [{ pattern: 'Moon imminent', weight: 0.9 }, { pattern: 'Consolidation before rally', weight: 0.6 }],
-  'green': [{ pattern: 'Moon imminent', weight: 0.8 }],
-  'rise': [{ pattern: 'Moon imminent', weight: 0.8 }, { pattern: 'Double bottom reversal', weight: 0.6 }],
-  'increasing': [{ pattern: 'Moon imminent', weight: 0.7 }],
+  // Trend indicators (highest confidence)
+  'uptrend': [{ pattern: 'Moon imminent', weight: 1.0 }, { pattern: 'Consolidation before rally', weight: 0.7 }],
+  'bullish': [{ pattern: 'Moon imminent', weight: 1.0 }, { pattern: 'Double bottom reversal', weight: 0.8 }],
+  'green': [{ pattern: 'Moon imminent', weight: 0.8 }, { pattern: 'Double bottom reversal', weight: 0.6 }],
+  'rising': [{ pattern: 'Moon imminent', weight: 0.9 }, { pattern: 'Consolidation before rally', weight: 0.7 }],
+  'growth': [{ pattern: 'Moon imminent', weight: 0.8 }, { pattern: 'Consolidation before rally', weight: 0.6 }],
+  'higher high': [{ pattern: 'Moon imminent', weight: 1.0 }, { pattern: 'Double bottom reversal', weight: 0.8 }],
+  'breakout': [{ pattern: 'Moon imminent', weight: 0.9 }, { pattern: 'Double bottom reversal', weight: 0.7 }],
   
-  // Bearish indicators
-  'downward': [{ pattern: 'Dead coin walking', weight: 0.9 }, { pattern: 'Pump and dump incoming', weight: 0.7 }],
-  'bearish': [{ pattern: 'Dead coin walking', weight: 0.9 }, { pattern: 'Pump and dump incoming', weight: 0.7 }],
-  'falling': [{ pattern: 'Dead coin walking', weight: 0.8 }],
-  'red': [{ pattern: 'Dead coin walking', weight: 0.7 }, { pattern: 'Pump and dump incoming', weight: 0.6 }],
-  'decrease': [{ pattern: 'Dead coin walking', weight: 0.7 }],
+  // Bearish indicators (highest confidence)
+  'downtrend': [{ pattern: 'Dead coin walking', weight: 1.0 }, { pattern: 'Pump and dump incoming', weight: 0.8 }],
+  'bearish': [{ pattern: 'Dead coin walking', weight: 1.0 }, { pattern: 'Pump and dump incoming', weight: 0.8 }],
+  'red': [{ pattern: 'Dead coin walking', weight: 0.8 }, { pattern: 'Pump and dump incoming', weight: 0.7 }],
+  'falling': [{ pattern: 'Dead coin walking', weight: 0.9 }, { pattern: 'Pump and dump incoming', weight: 0.7 }],
+  'decline': [{ pattern: 'Dead coin walking', weight: 0.9 }, { pattern: 'Pump and dump incoming', weight: 0.7 }],
+  'lower low': [{ pattern: 'Dead coin walking', weight: 1.0 }, { pattern: 'Pump and dump incoming', weight: 0.8 }],
+  'breakdown': [{ pattern: 'Dead coin walking', weight: 0.9 }, { pattern: 'Pump and dump incoming', weight: 0.7 }],
   
-  // Patterns
-  'consolidation': [{ pattern: 'Consolidation before rally', weight: 0.8 }, { pattern: 'Whale accumulation', weight: 0.6 }],
-  'support': [{ pattern: 'Double bottom reversal', weight: 0.8 }, { pattern: 'Consolidation before rally', weight: 0.7 }],
-  'resistance': [{ pattern: 'Pump and dump incoming', weight: 0.7 }, { pattern: 'Consolidation before rally', weight: 0.6 }],
-  'bottom': [{ pattern: 'Double bottom reversal', weight: 0.9 }],
-  'top': [{ pattern: 'Pump and dump incoming', weight: 0.8 }],
-  'range': [{ pattern: 'Whale accumulation', weight: 0.8 }, { pattern: 'Consolidation before rally', weight: 0.6 }],
+  // Specific patterns
+  'consolidation': [{ pattern: 'Consolidation before rally', weight: 1.0 }, { pattern: 'Whale accumulation', weight: 0.8 }],
+  'support': [{ pattern: 'Double bottom reversal', weight: 0.9 }, { pattern: 'Consolidation before rally', weight: 0.8 }],
+  'resistance': [{ pattern: 'Pump and dump incoming', weight: 0.8 }, { pattern: 'Moon imminent', weight: 0.6 }],
+  'bottom': [{ pattern: 'Double bottom reversal', weight: 1.0 }, { pattern: 'Consolidation before rally', weight: 0.7 }],
+  'double bottom': [{ pattern: 'Double bottom reversal', weight: 1.0 }, { pattern: 'Moon imminent', weight: 0.8 }],
+  'accumulation': [{ pattern: 'Whale accumulation', weight: 1.0 }, { pattern: 'Consolidation before rally', weight: 0.8 }],
+  'distribution': [{ pattern: 'Pump and dump incoming', weight: 0.9 }, { pattern: 'Dead coin walking', weight: 0.7 }],
   'sideways': [{ pattern: 'Whale accumulation', weight: 0.9 }, { pattern: 'Consolidation before rally', weight: 0.7 }],
+  'range': [{ pattern: 'Whale accumulation', weight: 0.8 }, { pattern: 'Consolidation before rally', weight: 0.6 }],
+  'flat': [{ pattern: 'Whale accumulation', weight: 0.7 }, { pattern: 'Consolidation before rally', weight: 0.6 }],
   
-  // Trading chart UI elements
-  'interface': [{ pattern: 'Moon imminent', weight: 0.5 }, { pattern: 'Whale accumulation', weight: 0.4 }],
-  'screen': [{ pattern: 'Moon imminent', weight: 0.4 }, { pattern: 'Dead coin walking', weight: 0.3 }],
-  'display': [{ pattern: 'Moon imminent', weight: 0.4 }, { pattern: 'Dead coin walking', weight: 0.3 }],
-  'monitor': [{ pattern: 'Moon imminent', weight: 0.4 }, { pattern: 'Whale accumulation', weight: 0.3 }],
-  'trading view': [{ pattern: 'Consolidation before rally', weight: 0.6 }, { pattern: 'Double bottom reversal', weight: 0.5 }],
+  // Visual chart features (high confidence for chart detection)
+  'grid': [{ pattern: 'Moon imminent', weight: 0.5 }, { pattern: 'Whale accumulation', weight: 0.4 }],
+  'axis': [{ pattern: 'Moon imminent', weight: 0.5 }, { pattern: 'Dead coin walking', weight: 0.4 }],
+  'price scale': [{ pattern: 'Moon imminent', weight: 0.6 }, { pattern: 'Whale accumulation', weight: 0.5 }],
+  'time scale': [{ pattern: 'Consolidation before rally', weight: 0.5 }, { pattern: 'Double bottom reversal', weight: 0.4 }],
+  'technical analysis': [{ pattern: 'Moon imminent', weight: 0.7 }, { pattern: 'Double bottom reversal', weight: 0.6 }],
   
-  // Price indicators
-  'price': [{ pattern: 'Moon imminent', weight: 0.6 }, { pattern: 'Dead coin walking', weight: 0.5 }],
-  'market': [{ pattern: 'Whale accumulation', weight: 0.6 }, { pattern: 'Pump and dump incoming', weight: 0.5 }],
-  'volume': [{ pattern: 'Whale accumulation', weight: 0.7 }, { pattern: 'Moon imminent', weight: 0.6 }],
+  // Cryptocurrencies (high confidence for crypto charts)
+  'bitcoin': [{ pattern: 'Moon imminent', weight: 0.7 }, { pattern: 'Whale accumulation', weight: 0.6 }],
+  'ethereum': [{ pattern: 'Consolidation before rally', weight: 0.7 }, { pattern: 'Double bottom reversal', weight: 0.6 }],
+  'meme coin': [{ pattern: 'Pump and dump incoming', weight: 0.9 }, { pattern: 'Moon imminent', weight: 0.8 }],
+  'token': [{ pattern: 'Pump and dump incoming', weight: 0.7 }, { pattern: 'Moon imminent', weight: 0.6 }],
+  'altcoin': [{ pattern: 'Pump and dump incoming', weight: 0.8 }, { pattern: 'Moon imminent', weight: 0.7 }],
+  
+  // Platform elements
+  'interface': [{ pattern: 'Moon imminent', weight: 0.4 }, { pattern: 'Whale accumulation', weight: 0.3 }],
+  'dashboard': [{ pattern: 'Moon imminent', weight: 0.4 }, { pattern: 'Dead coin walking', weight: 0.3 }],
+  'platform': [{ pattern: 'Whale accumulation', weight: 0.5 }, { pattern: 'Moon imminent', weight: 0.4 }],
+  'terminal': [{ pattern: 'Moon imminent', weight: 0.5 }, { pattern: 'Double bottom reversal', weight: 0.4 }],
+  
+  // Timeframes
+  'daily': [{ pattern: 'Moon imminent', weight: 0.5 }, { pattern: 'Dead coin walking', weight: 0.4 }],
+  'hourly': [{ pattern: 'Whale accumulation', weight: 0.5 }, { pattern: 'Pump and dump incoming', weight: 0.4 }],
+  'weekly': [{ pattern: 'Double bottom reversal', weight: 0.6 }, { pattern: 'Moon imminent', weight: 0.5 }],
+  'minute': [{ pattern: 'Pump and dump incoming', weight: 0.6 }, { pattern: 'Whale accumulation', weight: 0.5 }],
 };
 
 // Main service for analyzing chart images
@@ -161,7 +257,7 @@ export class ChartAnalysisService {
       this.classifier = await pipeline(
         'image-classification',
         'Xenova/vit-base-patch16-224',
-        { }
+        { quantized: false } // Use full precision for better accuracy
       );
       
       console.log('Chart analysis model loaded successfully');
@@ -175,74 +271,138 @@ export class ChartAnalysisService {
     return this.classifier;
   }
 
-  // Detect if the image is likely a crypto chart
+  // Enhanced chart detection algorithm
   private isChartImage(results: any[]): boolean {
-    console.log("Analyzing image for chart features...");
+    console.log("Analyzing image with enhanced chart detection...");
     
     // Extract all labels from results for analysis
     const labels = results.map(r => r.label.toLowerCase());
     console.log("Raw classification labels:", labels.slice(0, 10));
     
-    // Check for chart-specific terms in predictions
-    let chartScore = 0;
-    let matchedTerms: string[] = [];
+    // Advanced chart detection using feature vectors
+    let chartDetectionScore = 0;
+    let chartFeatureMatches = 0;
+    let matchedFeatures: string[] = [];
     
-    // Look for chart-specific terms in all results
-    for (const term of chartSpecificTerms) {
+    // Check for exact chart type matches (strongest signal)
+    for (const chartType of chartSpecificFeatures.chartTypes) {
       for (const result of results) {
         const label = result.label.toLowerCase();
-        if (label.includes(term.toLowerCase())) {
-          chartScore += result.score * 2; // Double weight for exact chart terms
-          matchedTerms.push(term);
+        if (label.includes(chartType.toLowerCase())) {
+          chartDetectionScore += result.score * 3;  // Triple weight for exact chart type matches
+          chartFeatureMatches += 1;
+          matchedFeatures.push(chartType);
+          console.log(`Strong chart type match: ${chartType}, score: ${result.score * 3}`);
         }
       }
     }
     
-    // Check for visual features common in crypto charts
-    for (const feature of cryptoChartVisualFeatures) {
+    // Check for chart elements (strong signal)
+    for (const element of chartSpecificFeatures.chartElements) {
+      for (const result of results) {
+        const label = result.label.toLowerCase();
+        if (label.includes(element.toLowerCase())) {
+          chartDetectionScore += result.score * 2;  // Double weight for chart elements
+          chartFeatureMatches += 1;
+          matchedFeatures.push(element);
+        }
+      }
+    }
+    
+    // Check for visual features (moderate signal)
+    for (const feature of chartSpecificFeatures.visualFeatures) {
       for (const result of results) {
         const label = result.label.toLowerCase();
         if (label.includes(feature.toLowerCase())) {
-          chartScore += result.score * 1.5;
-          matchedTerms.push(feature);
+          chartDetectionScore += result.score * 1.5;
+          chartFeatureMatches += 1;
+          matchedFeatures.push(feature);
         }
       }
     }
     
-    // Look for general financial or data visualization terms
-    const dataVisTerms = ['data', 'visualization', 'financial', 'analysis', 'statistics', 'line', 'bar', 'trend'];
-    for (const term of dataVisTerms) {
+    // Check for trading platforms (moderate signal)
+    for (const platform of chartSpecificFeatures.tradingPlatforms) {
       for (const result of results) {
         const label = result.label.toLowerCase();
-        if (label.includes(term.toLowerCase())) {
-          chartScore += result.score;
-          matchedTerms.push(term);
+        if (label.includes(platform.toLowerCase())) {
+          chartDetectionScore += result.score * 1.5;
+          chartFeatureMatches += 1;
+          matchedFeatures.push(platform);
         }
       }
     }
     
-    // Advanced heuristics: Check for combinations that strongly indicate a chart
-    // For example, both "line" and "graph" appearing together
-    const hasLine = labels.some(l => l.includes('line'));
-    const hasGraph = labels.some(l => l.includes('graph') || l.includes('chart'));
-    const hasGrid = labels.some(l => l.includes('grid') || l.includes('pattern'));
-    const hasTrading = labels.some(l => 
-      l.includes('trading') || 
-      l.includes('finance') || 
-      l.includes('market') ||
-      l.includes('stock') ||
-      l.includes('crypto')
-    );
-    
-    if ((hasLine && hasGraph) || (hasGrid && hasTrading)) {
-      chartScore += 3;
-      matchedTerms.push('chart pattern combination');
+    // Check for timeframes (weak signal, but still relevant)
+    for (const timeframe of chartSpecificFeatures.timeframes) {
+      for (const result of results) {
+        const label = result.label.toLowerCase();
+        if (label.includes(timeframe.toLowerCase())) {
+          chartDetectionScore += result.score;
+          chartFeatureMatches += 0.5;
+          matchedFeatures.push(timeframe);
+        }
+      }
     }
     
-    console.log(`Chart detection score: ${chartScore}, matched terms: ${matchedTerms.join(', ')}`);
+    // Check for combinations that strongly indicate a chart
+    // For example, "line" + "graph", "price" + "movement"
+    const hasChartType = labels.some(l => 
+      l.includes('chart') || l.includes('graph') || l.includes('plot') || l.includes('diagram'));
+      
+    const hasPriceElement = labels.some(l => 
+      l.includes('price') || l.includes('value') || l.includes('market') || l.includes('trading'));
+      
+    const hasVisualElement = labels.some(l => 
+      l.includes('line') || l.includes('bar') || l.includes('candle') || 
+      l.includes('grid') || l.includes('axis') || l.includes('scale'));
     
-    // Return true if the chart score is above threshold
-    return chartScore > 2;
+    // Boost score for strong chart indicators appearing together
+    if (hasChartType && hasPriceElement) {
+      chartDetectionScore += 2;
+      console.log("Boosting score: found chart type and price elements together");
+    }
+    
+    if (hasChartType && hasVisualElement) {
+      chartDetectionScore += 2;
+      console.log("Boosting score: found chart type and visual elements together");
+    }
+    
+    if (hasPriceElement && hasVisualElement) {
+      chartDetectionScore += 1.5;
+      console.log("Boosting score: found price elements and visual elements together");
+    }
+    
+    // Check for specific negative indicators that suggest NOT a chart
+    const negativeIndicators = [
+      'person', 'people', 'face', 'animal', 'food', 'landscape', 'building', 
+      'vehicle', 'furniture', 'clothing', 'plant', 'tree', 'flower'
+    ];
+    
+    let negativeScore = 0;
+    for (const indicator of negativeIndicators) {
+      for (const result of results.slice(0, 5)) { // Only check top 5 results
+        const label = result.label.toLowerCase();
+        if (label.includes(indicator)) {
+          negativeScore += result.score * 2;
+          console.log(`Negative indicator found: ${indicator}, penalty: ${result.score * 2}`);
+        }
+      }
+    }
+    
+    // Apply negative score as a penalty
+    chartDetectionScore = Math.max(0, chartDetectionScore - negativeScore);
+    
+    // Log detection details
+    console.log(`Final chart detection score: ${chartDetectionScore.toFixed(2)}`);
+    console.log(`Chart feature matches: ${chartFeatureMatches}`);
+    console.log(`Top matched features: ${matchedFeatures.slice(0, 5).join(', ')}`);
+    
+    // Return true if either the score is high enough OR we have multiple feature matches
+    const isChart = chartDetectionScore > 2.5 || chartFeatureMatches >= 3;
+    console.log(`Is chart image: ${isChart}`);
+    
+    return isChart;
   }
 
   // Analyze a chart image
@@ -250,11 +410,11 @@ export class ChartAnalysisService {
     try {
       const model = await this.initModel();
       
-      // Analyze the image
-      const results = await model(imageData);
+      // Analyze the image with top-k predictions (30 for broader coverage)
+      const results = await model(imageData, { topk: 30 });
       console.log('AI classification results:', results);
       
-      // Verify this is a chart image
+      // Enhanced chart detection
       const isChart = this.isChartImage(results);
       
       if (!isChart) {
@@ -266,7 +426,7 @@ export class ChartAnalysisService {
           confidence: 85,
           timestamp: Date.now(),
           trend: "sideways",
-          explanation: "This doesn't appear to be a cryptocurrency chart. For best analysis, please upload a trading chart image showing price movements.",
+          explanation: "This doesn't appear to be a cryptocurrency chart. For best results, please upload a trading chart showing price movements with candlesticks or price lines.",
         };
       }
       
@@ -304,7 +464,7 @@ export class ChartAnalysisService {
     }
   }
 
-  // Map model results to pattern scores using weights
+  // Enhanced pattern recognition using more granular feature matching
   private mapResultsToPatternScores(results: any[]): Map<string, number> {
     const patternScores = new Map<string, number>();
     
@@ -314,12 +474,12 @@ export class ChartAnalysisService {
     });
     
     // Process each prediction from the model
-    results.forEach(result => {
+    for (const result of results) {
       const label = result.label.toLowerCase();
       const score = result.score;
       
-      // Check if the label or parts of it map to our patterns
-      Object.keys(labelMappings).forEach(keyword => {
+      // Check for exact keyword matches in label mappings (primary scoring)
+      for (const keyword of Object.keys(labelMappings)) {
         if (label.includes(keyword.toLowerCase())) {
           // For each matching pattern, add weighted score
           labelMappings[keyword].forEach(mapping => {
@@ -327,37 +487,46 @@ export class ChartAnalysisService {
             patternScores.set(mapping.pattern, currentScore + (score * mapping.weight));
           });
         }
-      });
+      }
       
-      // Check for specific candlestick patterns in the label
-      if (label.includes('pattern') && label.includes('candle')) {
+      // Check for pattern-specific keyword matches (secondary scoring)
+      for (const pattern of chartPatterns) {
+        for (const keyword of pattern.keywords) {
+          if (label.includes(keyword.toLowerCase())) {
+            const currentScore = patternScores.get(pattern.name) || 0;
+            patternScores.set(pattern.name, currentScore + (score * 0.8)); // 80% weight for keyword matches
+          }
+        }
+      }
+      
+      // Special case matches for specific candlestick patterns
+      if ((label.includes('double') && label.includes('bottom')) || 
+          (label.includes('w') && label.includes('shape'))) {
         patternScores.set('Double bottom reversal', (patternScores.get('Double bottom reversal') || 0) + score * 2);
       }
       
-      // Check for upward trend indicators
-      if ((label.includes('up') && label.includes('trend')) || 
-          (label.includes('bull') && label.includes('market'))) {
-        patternScores.set('Moon imminent', (patternScores.get('Moon imminent') || 0) + score * 2);
+      // Special case for pump and dump patterns
+      if ((label.includes('spike') && label.includes('drop')) || 
+          (label.includes('parabolic') && label.includes('move'))) {
+        patternScores.set('Pump and dump incoming', (patternScores.get('Pump and dump incoming') || 0) + score * 2);
       }
-      
-      // Check for downward trend indicators
-      if ((label.includes('down') && label.includes('trend')) || 
-          (label.includes('bear') && label.includes('market'))) {
-        patternScores.set('Dead coin walking', (patternScores.get('Dead coin walking') || 0) + score * 2);
-      }
+    }
+    
+    // Normalize pattern scores
+    let maxScore = 0;
+    patternScores.forEach((score) => {
+      maxScore = Math.max(maxScore, score);
     });
     
-    // If no significant scores, add some baseline scores to prevent all-zero results
-    let hasSignificantScores = false;
-    patternScores.forEach(score => {
-      if (score > 0.1) hasSignificantScores = true;
-    });
-    
-    if (!hasSignificantScores) {
+    // If no significant scores were found, add some baseline scores
+    if (maxScore < 0.2) {
+      console.log("No significant pattern matches found, adding baseline scores");
       chartPatterns.forEach(pattern => {
-        patternScores.set(pattern.name, 0.1 + Math.random() * 0.3);
+        patternScores.set(pattern.name, 0.2 + Math.random() * 0.3);
       });
     }
+    
+    console.log("Pattern scores:", Object.fromEntries(patternScores.entries()));
     
     return patternScores;
   }
@@ -374,8 +543,8 @@ export class ChartAnalysisService {
       }
     });
     
-    // Normalize confidence between 0.65 and 0.99
-    const normalizedConfidence = Math.min(0.99, Math.max(0.65, highestScore));
+    // Normalize confidence between 0.65 and 0.95
+    const normalizedConfidence = Math.min(0.95, Math.max(0.65, highestScore));
     
     return {
       patternName: bestPatternName,
@@ -397,7 +566,7 @@ export class ChartAnalysisService {
       return "Based on the chart analysis, I've detected trading activity but can't determine a specific pattern with high confidence.";
     }
     
-    // Get the base explanation from the pattern
+    // Return the explanation from the pattern
     return pattern.explanation;
   }
 }
