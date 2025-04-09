@@ -72,7 +72,7 @@ const AnalysisResult: React.FC<AnalysisResultProps> = ({ result, onSave }) => {
             </motion.div>
           </motion.div>
           <CardTitle className="flex items-center gap-2">
-            <span className="text-oracle-600 font-bold">MEMEPUS</span>
+            <span className="text-oracle-600 font-bold">MEMEPUS (ChatGPT)</span>
             <span className="text-oracle-400">•</span>
             <span className="flex items-center gap-1">{getTrendIcon(result.trend)} {result.scenario}</span>
           </CardTitle>

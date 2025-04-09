@@ -4,10 +4,11 @@ import { useToast } from "@/hooks/use-toast";
 import { chartAnalysisService } from "@/utils/chartAnalysisService";
 import { AnalysisResult } from "@/types/AnalysisResult";
 
-// Import our new components
+// Import our components
 import AnalysisButton from "@/components/chart-analyzer/AnalysisButton";
 import AnalysisLoading from "@/components/chart-analyzer/AnalysisLoading";
 import AnalysisResultComponent from "@/components/chart-analyzer/AnalysisResult";
+import ApiKeyForm from "@/components/chart-analyzer/ApiKeyForm";
 
 interface ChartAnalyzerProps {
   imageData: string | null;
@@ -22,6 +23,7 @@ const ChartAnalyzer: React.FC<ChartAnalyzerProps> = ({ imageData, onSaveResult }
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [thinkingDots, setThinkingDots] = useState<string>("");
   const [modelStatus, setModelStatus] = useState<string>("");
+  const [isApiKeySet, setIsApiKeySet] = useState<boolean>(false);
   const { toast } = useToast();
 
   // Animate the thinking dots
@@ -42,21 +44,33 @@ const ChartAnalyzer: React.FC<ChartAnalyzerProps> = ({ imageData, onSaveResult }
     };
   }, [isAnalyzing]);
 
-  // Initialize model on component mount
+  // Initialize ChatGPT service on component mount
   useEffect(() => {
-    const preloadModel = async () => {
+    const checkApiKey = async () => {
       try {
-        setModelStatus("Loading AI model...");
-        await chartAnalysisService.initModel();
-        setModelStatus("AI model ready");
+        setModelStatus("Checking for OpenAI API key...");
+        const hasApiKey = await chartAnalysisService.initModel();
+        setIsApiKeySet(hasApiKey);
+        
+        if (hasApiKey) {
+          setModelStatus("ChatGPT ready");
+        } else {
+          setModelStatus("API key required");
+        }
       } catch (error) {
-        console.error("Error preloading model:", error);
-        setModelStatus("AI model failed to load");
+        console.error("Error checking API key:", error);
+        setModelStatus("Error checking API key");
+        setIsApiKeySet(false);
       }
     };
     
-    preloadModel();
+    checkApiKey();
   }, []);
+
+  const handleApiKeySet = () => {
+    setIsApiKeySet(true);
+    setModelStatus("ChatGPT ready");
+  }
 
   const analyzeChart = async () => {
     if (!imageData) {
@@ -66,12 +80,21 @@ const ChartAnalyzer: React.FC<ChartAnalyzerProps> = ({ imageData, onSaveResult }
       return;
     }
 
+    if (!isApiKeySet) {
+      toast({
+        title: "API Key Required",
+        description: "Please set your OpenAI API key first",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsAnalyzing(true);
     setAnalysisResult(null);
-    setModelStatus("Analyzing chart pattern...");
+    setModelStatus("Analyzing chart with ChatGPT...");
 
     try {
-      // Use the AI service to analyze the chart
+      // Use the ChatGPT service to analyze the chart
       const result = await chartAnalysisService.analyzeChartImage(imageData);
       
       setAnalysisResult(result);
@@ -86,7 +109,7 @@ const ChartAnalyzer: React.FC<ChartAnalyzerProps> = ({ imageData, onSaveResult }
       
       toast({
         title: "Analysis Error",
-        description: "Failed to analyze chart. Please try again.",
+        description: "Failed to analyze chart. Please check your API key and try again.",
         variant: "destructive",
       });
     } finally {
@@ -107,6 +130,15 @@ const ChartAnalyzer: React.FC<ChartAnalyzerProps> = ({ imageData, onSaveResult }
   useEffect(() => {
     setAnalysisResult(null);
   }, [imageData]);
+
+  // If API key is not set, show the API key form
+  if (!isApiKeySet) {
+    return (
+      <div className="mt-6">
+        <ApiKeyForm onApiKeySet={handleApiKeySet} />
+      </div>
+    );
+  }
 
   return (
     <div className="mt-6">
