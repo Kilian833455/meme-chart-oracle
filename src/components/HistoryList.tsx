@@ -1,10 +1,11 @@
 
 import React from "react";
-import { AnalysisResult } from "./ChartAnalyzer";
+import { AnalysisResult } from "@/types/AnalysisResult";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowUp, ArrowDown, ChartLine, Clock, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface HistoryListProps {
   history: AnalysisResult[];
@@ -66,7 +67,7 @@ const HistoryList: React.FC<HistoryListProps> = ({ history, onDeleteItem }) => {
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <div className="text-xs">
+                  <div className="text-xs flex-1">
                     <div className="flex items-center mb-1">
                       <span className="text-muted-foreground mr-2">Confidence:</span>
                       <div className="flex items-center">
@@ -79,6 +80,19 @@ const HistoryList: React.FC<HistoryListProps> = ({ history, onDeleteItem }) => {
                         <span>{item.confidence}%</span>
                       </div>
                     </div>
+
+                    {item.explanation && (
+                      <Accordion type="single" collapsible className="w-full">
+                        <AccordionItem value="explanation" className="border-b-0">
+                          <AccordionTrigger className="text-xs py-1 text-oracle-600 hover:no-underline">
+                            <span className="text-xs">View explanation</span>
+                          </AccordionTrigger>
+                          <AccordionContent className="text-xs text-muted-foreground">
+                            {item.explanation}
+                          </AccordionContent>
+                        </AccordionItem>
+                      </Accordion>
+                    )}
                   </div>
                 </div>
               </CardContent>

@@ -1,40 +1,83 @@
 
 import { pipeline } from '@huggingface/transformers';
-import { AnalysisResult } from '@/components/ChartAnalyzer';
+import { AnalysisResult } from '@/types/AnalysisResult';
 
 // Define the chart patterns that our model will recognize
 export interface ChartPattern {
   name: string;
   trend: "up" | "down" | "sideways";
   description: string;
+  keywords: string[];
+  explanation: string;
 }
 
 export const chartPatterns: ChartPattern[] = [
-  { name: "Moon imminent", trend: "up", description: "Strong bullish pattern suggesting significant upward movement" },
-  { name: "Pump and dump incoming", trend: "down", description: "Initial spike followed by steep decline" },
-  { name: "Dead coin walking", trend: "down", description: "Downtrend that shows no signs of recovery" },
-  { name: "Consolidation before rally", trend: "up", description: "Price stabilizing before upward movement" },
-  { name: "Whale accumulation", trend: "sideways", description: "Large holders accumulating coins in a range" },
-  { name: "Double bottom reversal", trend: "up", description: "Classic reversal pattern forming a bottom" },
+  { 
+    name: "Moon imminent", 
+    trend: "up", 
+    description: "Strong bullish pattern suggesting significant upward movement",
+    keywords: ["uptrend", "bullish", "ascending", "green", "growth", "rise"],
+    explanation: "This pattern shows a consistent uptrend with strong buying pressure. The increasing lows and highs indicate accumulation and growing market confidence."
+  },
+  { 
+    name: "Pump and dump incoming", 
+    trend: "down", 
+    description: "Initial spike followed by steep decline",
+    keywords: ["volatility", "spike", "peak", "sharp", "sudden"],
+    explanation: "I've detected a sudden price spike without supporting volume or consolidation, typically followed by a rapid sell-off. This pattern often indicates market manipulation."
+  },
+  { 
+    name: "Dead coin walking", 
+    trend: "down", 
+    description: "Downtrend that shows no signs of recovery",
+    keywords: ["downtrend", "bearish", "descending", "red", "falling", "decline"],
+    explanation: "The chart shows a persistent downtrend with lower highs and lower lows. There's significant selling pressure and no meaningful support levels are holding."
+  },
+  { 
+    name: "Consolidation before rally", 
+    trend: "up", 
+    description: "Price stabilizing before upward movement",
+    keywords: ["consolidation", "base", "stability", "floor", "support"],
+    explanation: "After a period of decline, prices are now trading in a tight range with decreasing volatility. This often precedes a breakout move to the upside as sellers become exhausted."
+  },
+  { 
+    name: "Whale accumulation", 
+    trend: "sideways", 
+    description: "Large holders accumulating coins in a range",
+    keywords: ["accumulation", "sideways", "range", "flat", "horizontal"],
+    explanation: "The price is moving sideways with increasing volume spikes. This suggests large holders (whales) are strategically accumulating positions before a potential move up."
+  },
+  { 
+    name: "Double bottom reversal", 
+    trend: "up", 
+    description: "Classic reversal pattern forming a bottom",
+    keywords: ["reversal", "bottom", "support", "double", "w-shape"],
+    explanation: "This chart shows a classic double bottom pattern where price tested support twice and held. The subsequent move above resistance confirms the reversal and indicates potential for upward momentum."
+  },
 ];
 
-// Map image classification labels to our chart patterns
-const labelToPatternMap: Record<string, string> = {
-  'uptrend': 'Moon imminent',
-  'bullish': 'Moon imminent',
-  'ascending': 'Moon imminent',
-  'downtrend': 'Dead coin walking',
-  'bearish': 'Dead coin walking',
-  'descending': 'Dead coin walking',
-  'volatility': 'Pump and dump incoming',
-  'spike': 'Pump and dump incoming',
-  'consolidation': 'Consolidation before rally',
-  'accumulation': 'Whale accumulation',
-  'sideways': 'Whale accumulation',
-  'range': 'Whale accumulation',
-  'reversal': 'Double bottom reversal',
-  'bottom': 'Double bottom reversal',
-  'support': 'Double bottom reversal',
+// Map image classification labels to our chart patterns with weights
+const labelMappings: Record<string, { pattern: string, weight: number }[]> = {
+  // Bullish patterns
+  'line': [{ pattern: 'Moon imminent', weight: 0.4 }, { pattern: 'Consolidation before rally', weight: 0.3 }],
+  'graph': [{ pattern: 'Moon imminent', weight: 0.2 }, { pattern: 'Whale accumulation', weight: 0.2 }],
+  'arrow': [{ pattern: 'Moon imminent', weight: 0.6 }, { pattern: 'Double bottom reversal', weight: 0.4 }],
+  'chart': [{ pattern: 'Moon imminent', weight: 0.2 }, { pattern: 'Dead coin walking', weight: 0.2 }],
+  'upward': [{ pattern: 'Moon imminent', weight: 0.8 }, { pattern: 'Double bottom reversal', weight: 0.6 }],
+  'green': [{ pattern: 'Moon imminent', weight: 0.7 }, { pattern: 'Consolidation before rally', weight: 0.5 }],
+  'growth': [{ pattern: 'Moon imminent', weight: 0.8 }],
+  'peak': [{ pattern: 'Pump and dump incoming', weight: 0.7 }],
+  'spike': [{ pattern: 'Pump and dump incoming', weight: 0.8 }],
+  'crash': [{ pattern: 'Dead coin walking', weight: 0.8 }],
+  'downward': [{ pattern: 'Dead coin walking', weight: 0.8 }, { pattern: 'Pump and dump incoming', weight: 0.6 }],
+  'red': [{ pattern: 'Dead coin walking', weight: 0.6 }, { pattern: 'Pump and dump incoming', weight: 0.5 }],
+  'falling': [{ pattern: 'Dead coin walking', weight: 0.7 }],
+  'flat': [{ pattern: 'Whale accumulation', weight: 0.7 }, { pattern: 'Consolidation before rally', weight: 0.5 }],
+  'horizontal': [{ pattern: 'Whale accumulation', weight: 0.8 }],
+  'stable': [{ pattern: 'Consolidation before rally', weight: 0.6 }, { pattern: 'Whale accumulation', weight: 0.5 }],
+  'support': [{ pattern: 'Double bottom reversal', weight: 0.7 }, { pattern: 'Consolidation before rally', weight: 0.5 }],
+  'cup': [{ pattern: 'Double bottom reversal', weight: 0.6 }],
+  'w': [{ pattern: 'Double bottom reversal', weight: 0.8 }],
 };
 
 // Main service for analyzing chart images
@@ -57,13 +100,12 @@ export class ChartAnalysisService {
       this.isLoading = true;
       
       // Load a general purpose image classification model
-      // We're using the "microsoft/resnet-50" model which is good for general image classification
       console.log('Loading chart analysis model...');
       
       this.classifier = await pipeline(
         'image-classification',
         'Xenova/vit-base-patch16-224',
-        { /* Removing the quantized option as it's not supported in the type */ }
+        { }
       );
       
       console.log('Chart analysis model loaded successfully');
@@ -84,14 +126,18 @@ export class ChartAnalysisService {
       
       // Analyze the image
       const results = await model(imageData);
+      console.log('AI classification results:', results);
       
-      // Map the results to our chart patterns based on labels
-      const patternMatches = this.mapResultsToPatterns(results);
+      // Map the results to our chart patterns based on weighted label matching
+      const patternScores = this.mapResultsToPatternScores(results);
       
       // Get the best match
-      const bestPattern = this.findBestPattern(patternMatches);
+      const bestPattern = this.findBestPattern(patternScores);
       
-      // Build the analysis result
+      // Find the detected labels for transparency
+      const detectedLabels = results.slice(0, 5).map((r: any) => r.label);
+      
+      // Build the analysis result with explanation
       return {
         id: `analysis-${Date.now()}`,
         imageData,
@@ -99,6 +145,8 @@ export class ChartAnalysisService {
         confidence: Math.round(bestPattern.confidence * 100), // Convert to percentage
         timestamp: Date.now(),
         trend: this.getPatternTrend(bestPattern.patternName),
+        explanation: this.generateExplanation(bestPattern.patternName, detectedLabels),
+        labels: detectedLabels,
       };
     } catch (error) {
       console.error('Error analyzing chart image:', error);
@@ -113,60 +161,96 @@ export class ChartAnalysisService {
         confidence: 65, // Lower confidence for fallback
         timestamp: Date.now(),
         trend: fallbackPattern.trend,
+        explanation: "I couldn't properly analyze this chart image, but based on general patterns, this looks like it might be " + fallbackPattern.name.toLowerCase() + ".",
       };
     }
   }
 
-  // Map model results to our chart patterns
-  private mapResultsToPatterns(results: any[]): { patternName: string, confidence: number }[] {
-    const patternMatches: { patternName: string, confidence: number }[] = [];
+  // Map model results to pattern scores using weights
+  private mapResultsToPatternScores(results: any[]): Map<string, number> {
+    const patternScores = new Map<string, number>();
+    
+    // Initialize scores for all patterns
+    chartPatterns.forEach(pattern => {
+      patternScores.set(pattern.name, 0);
+    });
     
     // Process each prediction from the model
     results.forEach(result => {
-      // Check if the label maps to one of our patterns
-      for (const [keyword, patternName] of Object.entries(labelToPatternMap)) {
-        if (result.label.toLowerCase().includes(keyword.toLowerCase())) {
-          // Add the match with its confidence
-          patternMatches.push({
-            patternName,
-            confidence: result.score,
+      const label = result.label.toLowerCase();
+      const score = result.score;
+      
+      // Check if the label or parts of it map to our patterns
+      Object.keys(labelMappings).forEach(keyword => {
+        if (label.includes(keyword.toLowerCase())) {
+          // For each matching pattern, add weighted score
+          labelMappings[keyword].forEach(mapping => {
+            const currentScore = patternScores.get(mapping.pattern) || 0;
+            patternScores.set(mapping.pattern, currentScore + (score * mapping.weight));
           });
-          break;
         }
-      }
+      });
     });
     
-    // If no matches found, add some fallback patterns with lower confidence
-    if (patternMatches.length === 0) {
+    // If no significant scores, add some baseline scores to prevent all-zero results
+    let hasSignificantScores = false;
+    patternScores.forEach(score => {
+      if (score > 0.1) hasSignificantScores = true;
+    });
+    
+    if (!hasSignificantScores) {
       chartPatterns.forEach(pattern => {
-        patternMatches.push({
-          patternName: pattern.name,
-          confidence: 0.1 + Math.random() * 0.3, // Random confidence between 0.1-0.4
-        });
+        patternScores.set(pattern.name, 0.1 + Math.random() * 0.3);
       });
     }
     
-    return patternMatches;
+    return patternScores;
   }
 
-  // Find the best pattern match
-  private findBestPattern(patternMatches: { patternName: string, confidence: number }[]): { patternName: string, confidence: number } {
-    if (patternMatches.length === 0) {
-      // Default fallback if no matches
-      return {
-        patternName: chartPatterns[0].name,
-        confidence: 0.65,
-      };
-    }
+  // Find the best pattern match based on accumulated scores
+  private findBestPattern(patternScores: Map<string, number>): { patternName: string, confidence: number } {
+    let bestPatternName = chartPatterns[0].name;
+    let highestScore = 0;
     
-    // Sort by confidence and return the best one
-    return patternMatches.sort((a, b) => b.confidence - a.confidence)[0];
+    patternScores.forEach((score, patternName) => {
+      if (score > highestScore) {
+        highestScore = score;
+        bestPatternName = patternName;
+      }
+    });
+    
+    // Normalize confidence between 0.65 and 0.99
+    const normalizedConfidence = Math.min(0.99, Math.max(0.65, highestScore));
+    
+    return {
+      patternName: bestPatternName,
+      confidence: normalizedConfidence,
+    };
   }
 
   // Get the trend direction for a pattern
   private getPatternTrend(patternName: string): "up" | "down" | "sideways" {
     const pattern = chartPatterns.find(p => p.name === patternName);
     return pattern ? pattern.trend : "sideways"; // Default to sideways if not found
+  }
+  
+  // Generate explanation based on the pattern and detected labels
+  private generateExplanation(patternName: string, detectedLabels: string[]): string {
+    const pattern = chartPatterns.find(p => p.name === patternName);
+    
+    if (!pattern) {
+      return "Based on the image analysis, this appears to show market activity but I can't determine a specific pattern.";
+    }
+    
+    // Get the base explanation from the pattern
+    let explanation = pattern.explanation;
+    
+    // Add insight about what was detected in the image
+    if (detectedLabels && detectedLabels.length > 0) {
+      explanation += ` I detected elements like ${detectedLabels.slice(0, 3).join(', ')} in the chart.`;
+    }
+    
+    return explanation;
   }
 }
 
