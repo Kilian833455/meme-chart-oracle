@@ -167,7 +167,7 @@ const labelMappings: Record<string, { pattern: string, weight: number }[]> = {
   
   // Candlestick patterns and chart elements
   'candle': [{ pattern: 'Moon imminent', weight: 0.8 }, { pattern: 'Double bottom reversal', weight: 0.7 }],
-  'candlestick': [{ pattern: 'Moon imminent', weight: 0.8 }, { pattern: 'Pump and dump incoming', weight: 0.6 }],
+  // Removed duplicate 'candlestick' entry that was causing the first error
   'bar': [{ pattern: 'Moon imminent', weight: 0.6 }, { pattern: 'Dead coin walking', weight: 0.5 }],
   'wick': [{ pattern: 'Double bottom reversal', weight: 0.7 }, { pattern: 'Pump and dump incoming', weight: 0.6 }],
   'pattern': [{ pattern: 'Double bottom reversal', weight: 0.8 }, { pattern: 'Consolidation before rally', weight: 0.7 }],
@@ -254,10 +254,11 @@ export class ChartAnalysisService {
       // Load a general purpose image classification model
       console.log('Loading chart analysis model...');
       
+      // Updated pipeline options to remove 'quantized' property which doesn't exist in PretrainedModelOptions
       this.classifier = await pipeline(
         'image-classification',
-        'Xenova/vit-base-patch16-224',
-        { quantized: false } // Use full precision for better accuracy
+        'Xenova/vit-base-patch16-224'
+        // Removed the invalid options object
       );
       
       console.log('Chart analysis model loaded successfully');
