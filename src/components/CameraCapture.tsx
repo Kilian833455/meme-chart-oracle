@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Camera, Upload, RefreshCw } from "lucide-react";
+import { Camera, Upload, RefreshCw, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface CameraCaptureProps {
@@ -14,6 +14,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onImageCapture }) => {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -28,6 +29,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onImageCapture }) => {
   }, [stream]);
 
   const startCamera = async () => {
+    setCameraError(null);
     try {
       // First check if camera is supported
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -35,14 +37,27 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onImageCapture }) => {
       }
 
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" }
+        video: { 
+          facingMode: "environment",
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
       });
       
       setStream(mediaStream);
       
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
-        await videoRef.current.play();  // Explicitly start playing
+        
+        // Wait for the video to be loaded and play it
+        videoRef.current.onloadedmetadata = () => {
+          if (videoRef.current) {
+            videoRef.current.play().catch(err => {
+              console.error("Error playing video:", err);
+              setCameraError("Failed to start video stream");
+            });
+          }
+        };
       }
       
       setIsCameraActive(true);
@@ -53,6 +68,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onImageCapture }) => {
     } catch (error) {
       console.error("Error accessing camera:", error);
       setHasCameraPermission(false);
+      setCameraError("Unable to access camera. Please check browser permissions or try uploading an image instead.");
       
       toast({
         title: "Camera Error",
@@ -80,16 +96,24 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onImageCapture }) => {
 
     try {
       const canvas = document.createElement("canvas");
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
+      const video = videoRef.current;
+      
+      // Set canvas dimensions to match the video dimensions
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
       
       const ctx = canvas.getContext("2d");
       if (ctx) {
-        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-        const imageData = canvas.toDataURL("image/jpeg", 0.8);
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = canvas.toDataURL("image/jpeg", 0.85);
         setCapturedImage(imageData);
         onImageCapture(imageData);
         stopCamera();
+        
+        toast({
+          title: "Image Captured",
+          description: "Chart image captured successfully",
+        });
       }
     } catch (error) {
       console.error("Error capturing image:", error);
@@ -119,6 +143,11 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onImageCapture }) => {
         const imageData = event.target?.result as string;
         setCapturedImage(imageData);
         onImageCapture(imageData);
+        
+        toast({
+          title: "Image Uploaded",
+          description: "Chart image uploaded successfully",
+        });
       };
       reader.readAsDataURL(file);
     }
@@ -144,11 +173,25 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onImageCapture }) => {
               playsInline
               className="w-full h-[300px] object-cover"
             />
+            {cameraError && (
+              <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white p-4 text-center">
+                <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
+                <p>{cameraError}</p>
+                <Button 
+                  onClick={() => setIsCameraActive(false)} 
+                  variant="outline"
+                  className="mt-3 border-white text-white hover:bg-white/20"
+                >
+                  Go Back
+                </Button>
+              </div>
+            )}
             <div className="absolute bottom-4 left-0 right-0 flex justify-center">
               <Button 
                 onClick={captureImage} 
                 size="lg" 
                 className="rounded-full w-16 h-16 bg-white border-4 border-oracle-300 hover:bg-oracle-100"
+                disabled={!!cameraError}
               >
                 <Camera className="h-8 w-8 text-oracle-500" />
               </Button>

@@ -32,13 +32,21 @@ const HistoryList: React.FC<HistoryListProps> = ({ history, onDeleteItem }) => {
     }
   };
 
+  const getTrendColor = (trend: "up" | "down" | "sideways") => {
+    switch (trend) {
+      case "up": return "border-l-2 border-green-500 bg-green-50/30";
+      case "down": return "border-l-2 border-red-500 bg-red-50/30";
+      default: return "border-l-2 border-yellow-500 bg-yellow-50/30";
+    }
+  };
+
   return (
     <div className="mt-8">
       <h2 className="text-xl font-semibold mb-4 text-oracle-600">Analysis History</h2>
       <ScrollArea className="h-[300px] rounded-md border border-oracle-200">
         <div className="p-4 space-y-4">
           {history.map((item) => (
-            <Card key={item.id} className="border border-oracle-200">
+            <Card key={item.id} className={`border border-oracle-200 ${getTrendColor(item.trend)}`}>
               <CardHeader className="pb-2 flex flex-row items-start">
                 <div className="flex-1">
                   <CardTitle className="text-base flex items-center gap-2">
@@ -73,7 +81,7 @@ const HistoryList: React.FC<HistoryListProps> = ({ history, onDeleteItem }) => {
                       <div className="flex items-center">
                         <div className="h-2 w-16 bg-gray-200 rounded-full overflow-hidden mr-1">
                           <div
-                            className="h-full bg-oracle-400"
+                            className={`h-full ${item.trend === "up" ? "bg-green-500" : item.trend === "down" ? "bg-red-500" : "bg-oracle-400"}`}
                             style={{ width: `${item.confidence}%` }}
                           ></div>
                         </div>
@@ -85,7 +93,7 @@ const HistoryList: React.FC<HistoryListProps> = ({ history, onDeleteItem }) => {
                       <Accordion type="single" collapsible className="w-full">
                         <AccordionItem value="explanation" className="border-b-0">
                           <AccordionTrigger className="text-xs py-1 text-oracle-600 hover:no-underline">
-                            <span className="text-xs">View explanation</span>
+                            <span className="text-xs">View analysis</span>
                           </AccordionTrigger>
                           <AccordionContent className="text-xs text-muted-foreground">
                             {item.explanation}
