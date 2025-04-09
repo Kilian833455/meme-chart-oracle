@@ -56,22 +56,41 @@ export const chartPatterns: ChartPattern[] = [
   },
 ];
 
+// Chart-specific words to help identify chart images
+const chartSpecificTerms = [
+  'chart', 'graph', 'plot', 'candlestick', 'bar chart', 'line chart', 
+  'uptrend', 'downtrend', 'trading', 'stock', 'crypto', 'market',
+  'price action', 'technical', 'analysis', 'indicator', 'pattern',
+  'breakout', 'support', 'resistance', 'moving average', 'volume'
+];
+
 // Map image classification labels to our chart patterns with weights
 const labelMappings: Record<string, { pattern: string, weight: number }[]> = {
-  // Bullish patterns
-  'line': [{ pattern: 'Moon imminent', weight: 0.4 }, { pattern: 'Consolidation before rally', weight: 0.3 }],
+  // Chart-related terms
+  'chart': [{ pattern: 'Moon imminent', weight: 0.4 }, { pattern: 'Dead coin walking', weight: 0.2 }],
   'graph': [{ pattern: 'Moon imminent', weight: 0.2 }, { pattern: 'Whale accumulation', weight: 0.2 }],
-  'arrow': [{ pattern: 'Moon imminent', weight: 0.6 }, { pattern: 'Double bottom reversal', weight: 0.4 }],
-  'chart': [{ pattern: 'Moon imminent', weight: 0.2 }, { pattern: 'Dead coin walking', weight: 0.2 }],
+  'line': [{ pattern: 'Moon imminent', weight: 0.4 }, { pattern: 'Consolidation before rally', weight: 0.3 }],
+  'diagram': [{ pattern: 'Double bottom reversal', weight: 0.3 }, { pattern: 'Whale accumulation', weight: 0.2 }],
+  'plot': [{ pattern: 'Moon imminent', weight: 0.3 }, { pattern: 'Dead coin walking', weight: 0.3 }],
+  'candlestick': [{ pattern: 'Pump and dump incoming', weight: 0.5 }],
+  
+  // Bullish patterns
   'upward': [{ pattern: 'Moon imminent', weight: 0.8 }, { pattern: 'Double bottom reversal', weight: 0.6 }],
   'green': [{ pattern: 'Moon imminent', weight: 0.7 }, { pattern: 'Consolidation before rally', weight: 0.5 }],
   'growth': [{ pattern: 'Moon imminent', weight: 0.8 }],
+  'ascending': [{ pattern: 'Moon imminent', weight: 0.7 }],
+  'bullish': [{ pattern: 'Moon imminent', weight: 0.9 }, { pattern: 'Double bottom reversal', weight: 0.7 }],
+  
+  // Bearish patterns
   'peak': [{ pattern: 'Pump and dump incoming', weight: 0.7 }],
   'spike': [{ pattern: 'Pump and dump incoming', weight: 0.8 }],
   'crash': [{ pattern: 'Dead coin walking', weight: 0.8 }],
   'downward': [{ pattern: 'Dead coin walking', weight: 0.8 }, { pattern: 'Pump and dump incoming', weight: 0.6 }],
   'red': [{ pattern: 'Dead coin walking', weight: 0.6 }, { pattern: 'Pump and dump incoming', weight: 0.5 }],
   'falling': [{ pattern: 'Dead coin walking', weight: 0.7 }],
+  'bearish': [{ pattern: 'Dead coin walking', weight: 0.9 }, { pattern: 'Pump and dump incoming', weight: 0.7 }],
+  
+  // Consolidation patterns
   'flat': [{ pattern: 'Whale accumulation', weight: 0.7 }, { pattern: 'Consolidation before rally', weight: 0.5 }],
   'horizontal': [{ pattern: 'Whale accumulation', weight: 0.8 }],
   'stable': [{ pattern: 'Consolidation before rally', weight: 0.6 }, { pattern: 'Whale accumulation', weight: 0.5 }],
@@ -119,6 +138,31 @@ export class ChartAnalysisService {
     return this.classifier;
   }
 
+  // Check if the image is likely a chart
+  private isChartImage(results: any[]): boolean {
+    // Look for chart-specific terms in the top predictions
+    const labels = results.slice(0, 10).map(r => r.label.toLowerCase());
+    
+    // Check if any chart-specific terms appear in the classifications
+    for (const term of chartSpecificTerms) {
+      for (const label of labels) {
+        if (label.includes(term.toLowerCase())) {
+          return true;
+        }
+      }
+    }
+    
+    // If nothing chart-specific was found, but there's "graph", "line", or "diagram" in top 3
+    const topLabels = labels.slice(0, 3);
+    return topLabels.some(label => 
+      label.includes('graph') || 
+      label.includes('line') || 
+      label.includes('diagram') ||
+      label.includes('chart') ||
+      label.includes('plot')
+    );
+  }
+
   // Analyze a chart image
   async analyzeChartImage(imageData: string): Promise<AnalysisResult> {
     try {
@@ -128,14 +172,27 @@ export class ChartAnalysisService {
       const results = await model(imageData);
       console.log('AI classification results:', results);
       
+      // Verify this is a chart image
+      const isChart = this.isChartImage(results);
+      
+      if (!isChart) {
+        // Return a helpful message if not a chart
+        return {
+          id: `analysis-${Date.now()}`,
+          imageData,
+          scenario: "Not a chart",
+          confidence: 85,
+          timestamp: Date.now(),
+          trend: "sideways",
+          explanation: "This doesn't appear to be a chart image. For best results, please upload or capture an image of a financial chart.",
+        };
+      }
+      
       // Map the results to our chart patterns based on weighted label matching
       const patternScores = this.mapResultsToPatternScores(results);
       
       // Get the best match
       const bestPattern = this.findBestPattern(patternScores);
-      
-      // Find the detected labels for transparency
-      const detectedLabels = results.slice(0, 5).map((r: any) => r.label);
       
       // Build the analysis result with explanation
       return {
@@ -145,8 +202,7 @@ export class ChartAnalysisService {
         confidence: Math.round(bestPattern.confidence * 100), // Convert to percentage
         timestamp: Date.now(),
         trend: this.getPatternTrend(bestPattern.patternName),
-        explanation: this.generateExplanation(bestPattern.patternName, detectedLabels),
-        labels: detectedLabels,
+        explanation: this.generateExplanation(bestPattern.patternName),
       };
     } catch (error) {
       console.error('Error analyzing chart image:', error);
@@ -234,8 +290,8 @@ export class ChartAnalysisService {
     return pattern ? pattern.trend : "sideways"; // Default to sideways if not found
   }
   
-  // Generate explanation based on the pattern and detected labels
-  private generateExplanation(patternName: string, detectedLabels: string[]): string {
+  // Generate explanation based on the pattern
+  private generateExplanation(patternName: string): string {
     const pattern = chartPatterns.find(p => p.name === patternName);
     
     if (!pattern) {
@@ -243,14 +299,7 @@ export class ChartAnalysisService {
     }
     
     // Get the base explanation from the pattern
-    let explanation = pattern.explanation;
-    
-    // Add insight about what was detected in the image
-    if (detectedLabels && detectedLabels.length > 0) {
-      explanation += ` I detected elements like ${detectedLabels.slice(0, 3).join(', ')} in the chart.`;
-    }
-    
-    return explanation;
+    return pattern.explanation;
   }
 }
 

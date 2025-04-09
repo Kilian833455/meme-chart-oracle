@@ -6,6 +6,5 @@ export interface AnalysisResult {
   confidence: number;
   timestamp: number;
   trend: "up" | "down" | "sideways";
-  explanation: string;  // Add explanation field
-  labels?: string[];    // Add detected labels for transparency
+  explanation: string;
 }

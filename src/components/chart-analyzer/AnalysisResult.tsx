@@ -33,13 +33,17 @@ const AnalysisResult: React.FC<AnalysisResultProps> = ({ result, onSave }) => {
   return (
     <Card className="border border-oracle-200 shadow-lg animate-pulse-glow">
       <CardHeader className="bg-gradient-to-r from-oracle-300/20 to-oracle-400/10">
-        <CardTitle className="flex items-center gap-2">
-          <Avatar className="w-6 h-6 mr-1">
+        <div className="flex items-center gap-2 mb-2">
+          <Avatar className="w-8 h-8 ring-2 ring-oracle-300 ring-offset-1">
             <AvatarImage src="/lovable-uploads/1d9a95a2-42a4-4884-8297-1968d1893ad6.png" alt="MEMEPUS" />
             <AvatarFallback className="bg-oracle-300 text-white text-xs">M</AvatarFallback>
           </Avatar>
-          <span className="text-oracle-600">MEMEPUS thinks:</span> {getTrendIcon(result.trend)} {result.scenario}
-        </CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <span className="text-oracle-600 font-bold">MEMEPUS</span>
+            <span className="text-oracle-400">•</span>
+            <span className="flex items-center">{getTrendIcon(result.trend)} {result.scenario}</span>
+          </CardTitle>
+        </div>
         <CardDescription>
           {getScenarioDescription(result.scenario)}
         </CardDescription>
@@ -65,22 +69,6 @@ const AnalysisResult: React.FC<AnalysisResultProps> = ({ result, onSave }) => {
             </AccordionTrigger>
             <AccordionContent className="text-sm">
               <p className="text-muted-foreground">{result.explanation}</p>
-              
-              {result.labels && result.labels.length > 0 && (
-                <div className="mt-3">
-                  <p className="text-xs font-medium text-muted-foreground">Detected elements:</p>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {result.labels.slice(0, 5).map((label, index) => (
-                      <span 
-                        key={index} 
-                        className="text-xs bg-oracle-100 text-oracle-600 rounded-full px-2 py-0.5"
-                      >
-                        {label}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
             </AccordionContent>
           </AccordionItem>
         </Accordion>

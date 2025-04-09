@@ -15,7 +15,6 @@ const Index = () => {
   const [coinInfoHistory, setCoinInfoHistory] = useState<CoinInfo[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState<string | undefined>();
-  const [coinFormKey, setCoinFormKey] = useState<number>(0);
 
   useEffect(() => {
     const savedHistory = localStorage.getItem("analysisHistory");
@@ -58,7 +57,6 @@ const Index = () => {
 
   const handleImageCapture = (imageData: string | null) => {
     setCapturedImage(imageData);
-    setCoinFormKey(prevKey => prevKey + 1);
   };
 
   const handleSaveResult = (result: AnalysisResult) => {
@@ -109,7 +107,7 @@ const Index = () => {
               Add Coin Information
             </AccordionTrigger>
             <AccordionContent>
-              <CoinInfoForm key={coinFormKey} onSubmit={handleAddCoinInfo} />
+              <CoinInfoForm onSubmit={handleAddCoinInfo} />
             </AccordionContent>
           </AccordionItem>
         </Accordion>

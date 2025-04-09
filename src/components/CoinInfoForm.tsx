@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,28 @@ const CoinInfoForm: React.FC<CoinInfoFormProps> = ({ onSubmit }) => {
   const [website, setWebsite] = useState("");
   const { toast } = useToast();
 
+  // Load form data from localStorage if available
+  useEffect(() => {
+    const savedFormData = localStorage.getItem("coin-form-data");
+    if (savedFormData) {
+      try {
+        const data = JSON.parse(savedFormData);
+        setName(data.name || "");
+        setSymbol(data.symbol || "");
+        setDescription(data.description || "");
+        setWebsite(data.website || "");
+      } catch (error) {
+        console.error("Error loading saved form data:", error);
+      }
+    }
+  }, []);
+
+  // Save form data to localStorage when it changes
+  useEffect(() => {
+    const formData = { name, symbol, description, website };
+    localStorage.setItem("coin-form-data", JSON.stringify(formData));
+  }, [name, symbol, description, website]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -49,12 +71,7 @@ const CoinInfoForm: React.FC<CoinInfoFormProps> = ({ onSubmit }) => {
     
     onSubmit(newCoinInfo);
     
-    // Reset form
-    setName("");
-    setSymbol("");
-    setDescription("");
-    setWebsite("");
-    
+    // Do not reset form, just show success toast
     toast({
       description: "Coin information added!",
     });
